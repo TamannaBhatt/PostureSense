@@ -24,6 +24,8 @@ class PoseDetector:
 
         results = self.pose.process(rgb)
 
+        landmarks = None
+
         if results.pose_landmarks:
 
             self.drawer.draw_landmarks(
@@ -32,4 +34,6 @@ class PoseDetector:
                 self.mp_pose.POSE_CONNECTIONS
             )
 
-        return frame, results
+            landmarks = results.pose_landmarks.landmark
+
+        return frame, landmarks
