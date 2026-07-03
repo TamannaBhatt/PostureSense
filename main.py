@@ -62,40 +62,27 @@ while True:
             2
         )
 
-        left_ear = landmarks[mp_pose.PoseLandmark.LEFT_EAR.value]
-        left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
-        left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP.value]
-        left_knee = landmarks[ mp_pose.PoseLandmark.LEFT_KNEE.value ]
-
-
-        ear = (left_ear.x, left_ear.y)
-        shoulder = (left_shoulder.x, left_shoulder.y)
-        hip = (left_hip.x, left_hip.y)
-        knee = (left_knee.x,left_knee.y)
-        left_shoulder_point = (left_shoulder.x, left_shoulder.y)
-        right_shoulder_point = (right_shoulder.x, right_shoulder.y)
-
-
-        neck_angle = FeatureExtractor.calculate_angle( ear, shoulder, hip)
-        back_angle = FeatureExtractor.calculate_angle(shoulder, hip, knee)
-        shoulder_tilt = FeatureExtractor.calculate_shoulder_tilt(left_shoulder_point,right_shoulder_point)
-        head_offset = FeatureExtractor.calculate_head_offset(ear, shoulder)
+        # Get all posture features
+        features = FeatureExtractor.extract_features(
+            landmarks,
+            mp_pose
+        )
 
 
         cv2.putText(
-            frame, f"Neck Angle: {neck_angle:.1f}",(10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2
+            frame, f"Neck Angle: {features['neck_angle']:.1f}",(10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2
         )
 
         cv2.putText(
-            frame, f"Back Angle: {back_angle:.1f}",(10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2 
+            frame, f"Back Angle: {features['back_angle']:.1f}",(10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2 
         ) 
 
         cv2.putText(
-            frame, f"Shoulder Tilt: {shoulder_tilt:.3f}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2
+            frame, f"Shoulder Tilt: {features['shoulder_tilt']:.3f}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2
         )
 
         cv2.putText(
-            frame, f"Head Offset: {head_offset:.3f}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2
+            frame, f"Head Offset: {features['head_offset']:.3f}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2
         )
         
     # Display the webcam

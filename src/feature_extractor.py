@@ -38,3 +38,48 @@ class FeatureExtractor:
         Larger value indicates forward head posture.
         """
         return abs(ear[0] - shoulder[0])
+    
+    @staticmethod
+    def extract_features(landmarks, mp_pose):
+
+        left_ear = landmarks[mp_pose.PoseLandmark.LEFT_EAR.value]
+        left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
+        right_shoulder = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value]
+        left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP.value]
+        left_knee = landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value]
+
+        ear = (left_ear.x, left_ear.y)
+        shoulder = (left_shoulder.x, left_shoulder.y)
+        hip = (left_hip.x, left_hip.y)
+        knee = (left_knee.x, left_knee.y)
+
+        left_shoulder_point = (
+            left_shoulder.x, left_shoulder.y
+        )
+
+        right_shoulder_point = (
+            right_shoulder.x, right_shoulder.y
+        )
+
+        neck_angle = FeatureExtractor.calculate_angle(
+            ear, shoulder, hip
+        )
+
+        back_angle = FeatureExtractor.calculate_angle(
+            shoulder, hip, knee
+        )
+
+        shoulder_tilt = FeatureExtractor.calculate_shoulder_tilt(
+            left_shoulder_point, right_shoulder_point
+        )
+
+        head_offset = FeatureExtractor.calculate_head_offset(
+            ear, shoulder
+        )
+
+        return {
+            "neck_angle": neck_angle,
+            "back_angle": back_angle,
+            "shoulder_tilt": shoulder_tilt,
+            "head_offset": head_offset
+        }
