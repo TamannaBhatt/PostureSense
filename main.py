@@ -1,6 +1,7 @@
 import cv2
 from src.pose_detector import PoseDetector
 from src.feature_extractor import FeatureExtractor
+from src.posture_analyzer import PostureAnalyzer
 
 # Initialize webcam
 cap = cv2.VideoCapture(0)
@@ -69,6 +70,8 @@ while True:
         )
 
 
+        analysis = PostureAnalyzer.analyze(features)
+
         cv2.putText(
             frame, f"Neck Angle: {features['neck_angle']:.1f}",(10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2
         )
@@ -83,6 +86,14 @@ while True:
 
         cv2.putText(
             frame, f"Head Offset: {features['head_offset']:.3f}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2
+        )
+
+        cv2.putText(
+            frame, f"Posture Score: {analysis['score']}", (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, analysis["color"], 2
+        )
+
+        cv2.putText(
+            frame, f"Status: {analysis['status']}",(10, 270),cv2.FONT_HERSHEY_SIMPLEX, 0.7, analysis["color"], 2
         )
         
     # Display the webcam
