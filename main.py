@@ -65,17 +65,31 @@ while True:
         left_ear = landmarks[mp_pose.PoseLandmark.LEFT_EAR.value]
         left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
         left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP.value]
+        left_knee = landmarks[ mp_pose.PoseLandmark.LEFT_KNEE.value ]
+
 
         ear = (left_ear.x, left_ear.y)
         shoulder = (left_shoulder.x, left_shoulder.y)
         hip = (left_hip.x, left_hip.y)
+        knee = (left_knee.x,left_knee.y)
+
 
         neck_angle = FeatureExtractor.calculate_angle( ear, shoulder, hip)
+        back_angle = FeatureExtractor.calculate_angle(shoulder, hip, knee)
 
         cv2.putText(
             frame, f"Neck Angle: {neck_angle:.1f}",(10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2
         )
 
+        cv2.putText(
+            frame,
+            f"Back Angle: {back_angle:.1f}",(10, 150),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.6,
+            (255, 255, 0), 2
+        ) 
+
+        
+        
     # Display the webcam
     cv2.imshow("PostureSense AI", frame)
 
