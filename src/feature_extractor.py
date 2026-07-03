@@ -30,3 +30,11 @@ class FeatureExtractor:
         """
 
         return left_shoulder[1] - right_shoulder[1]
+    
+    @staticmethod
+    def calculate_head_offset(ear, shoulder):
+        """
+        Returns horizontal distance between ear and shoulder.
+        Larger value indicates forward head posture.
+        """
+        return abs(ear[0] - shoulder[0])

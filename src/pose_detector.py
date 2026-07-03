@@ -37,3 +37,5 @@ class PoseDetector:
             landmarks = results.pose_landmarks.landmark
 
         return frame, landmarks
+    
+    

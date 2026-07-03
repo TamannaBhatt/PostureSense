@@ -79,20 +79,24 @@ while True:
         neck_angle = FeatureExtractor.calculate_angle( ear, shoulder, hip)
         back_angle = FeatureExtractor.calculate_angle(shoulder, hip, knee)
         shoulder_tilt = FeatureExtractor.calculate_shoulder_tilt(left_shoulder_point,right_shoulder_point)
+        head_offset = FeatureExtractor.calculate_head_offset(ear, shoulder)
+
 
         cv2.putText(
             frame, f"Neck Angle: {neck_angle:.1f}",(10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2
         )
 
         cv2.putText(
-            frame, f"Back Angle: {back_angle:.1f}",(10, 150),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-            (255, 255, 0), 2 ) 
+            frame, f"Back Angle: {back_angle:.1f}",(10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2 
+        ) 
 
         cv2.putText(
-            frame, f"Shoulder Tilt: {shoulder_tilt:.3f}", (10, 180),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-            (255, 0, 255), 2)
+            frame, f"Shoulder Tilt: {shoulder_tilt:.3f}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2
+        )
+
+        cv2.putText(
+            frame, f"Head Offset: {head_offset:.3f}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2
+        )
         
     # Display the webcam
     cv2.imshow("PostureSense AI", frame)
