@@ -1,5 +1,6 @@
 import cv2
 from src.pose_detector import PoseDetector
+from src.feature_extractor import FeatureExtractor
 
 # Initialize webcam
 cap = cv2.VideoCapture(0)
@@ -59,6 +60,20 @@ while True:
             0.6,
             (0, 255, 0),
             2
+        )
+
+        left_ear = landmarks[mp_pose.PoseLandmark.LEFT_EAR.value]
+        left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
+        left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP.value]
+
+        ear = (left_ear.x, left_ear.y)
+        shoulder = (left_shoulder.x, left_shoulder.y)
+        hip = (left_hip.x, left_hip.y)
+
+        neck_angle = FeatureExtractor.calculate_angle( ear, shoulder, hip)
+
+        cv2.putText(
+            frame, f"Neck Angle: {neck_angle:.1f}",(10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2
         )
 
     # Display the webcam
