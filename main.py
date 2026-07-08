@@ -2,12 +2,14 @@ import cv2
 from src.pose_detector import PoseDetector
 from src.feature_extractor import FeatureExtractor
 from src.posture_analyzer import PostureAnalyzer
+from src.posture_monitor import PostureMonitor
 
 # Initialize webcam
 cap = cv2.VideoCapture(0)
 
 # Create PoseDetector object
 detector = PoseDetector()
+monitor = PostureMonitor()
 
 while True:
 
@@ -71,6 +73,9 @@ while True:
 
 
         analysis = PostureAnalyzer.analyze(features)
+        bad_posture_time = monitor.update(
+            analysis["status"]
+        )
 
         cv2.putText(
             frame, f"Neck Angle: {features['neck_angle']:.1f}",(10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2
@@ -95,7 +100,22 @@ while True:
         cv2.putText(
             frame, f"Status: {analysis['status']}",(10, 270),cv2.FONT_HERSHEY_SIMPLEX, 0.7, analysis["color"], 2
         )
+
+        cv2.putText(
+            frame, f"Bad Posture: {bad_posture_time}s", (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(0, 0, 255),2
+        )
         
+        if bad_posture_time >= 30:
+            cv2.putText(
+                frame,
+                "WARNING: SIT STRAIGHT!",
+                (220,50),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0,0,255),
+                3
+            )
+
     # Display the webcam
     cv2.imshow("PostureSense AI", frame)
 
