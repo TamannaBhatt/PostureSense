@@ -3,6 +3,7 @@ from src.pose_detector import PoseDetector
 from src.feature_extractor import FeatureExtractor
 from src.posture_analyzer import PostureAnalyzer
 from src.posture_monitor import PostureMonitor
+from src.logger import PostureLogger
 
 # Initialize webcam
 cap = cv2.VideoCapture(0)
@@ -10,6 +11,7 @@ cap = cv2.VideoCapture(0)
 # Create PoseDetector object
 detector = PoseDetector()
 monitor = PostureMonitor()
+logger = PostureLogger()
 
 while True:
 
@@ -71,11 +73,12 @@ while True:
             mp_pose
         )
 
-
         analysis = PostureAnalyzer.analyze(features)
         bad_posture_time = monitor.update(
             analysis["status"]
         )
+
+        logger.log(features, analysis)
 
         cv2.putText(
             frame, f"Neck Angle: {features['neck_angle']:.1f}",(10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2
