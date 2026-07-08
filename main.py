@@ -4,14 +4,16 @@ from src.feature_extractor import FeatureExtractor
 from src.posture_analyzer import PostureAnalyzer
 from src.posture_monitor import PostureMonitor
 from src.logger import PostureLogger
+from src.session_timer import SessionTimer
 
 # Initialize webcam
 cap = cv2.VideoCapture(0)
 
-# Create PoseDetector object
+# Create object
 detector = PoseDetector()
 monitor = PostureMonitor()
 logger = PostureLogger()
+session = SessionTimer()
 
 while True:
 
@@ -78,6 +80,8 @@ while True:
             analysis["status"]
         )
 
+        session_time = session.get_time()
+
         logger.log(features, analysis)
 
         cv2.putText(
@@ -107,16 +111,14 @@ while True:
         cv2.putText(
             frame, f"Bad Posture: {bad_posture_time}s", (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(0, 0, 255),2
         )
+
+        cv2.putText(
+            frame,f"Session: {session_time}", (10, 330), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2
+        )
         
         if bad_posture_time >= 30:
             cv2.putText(
-                frame,
-                "WARNING: SIT STRAIGHT!",
-                (220,50),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0,0,255),
-                3
+                frame, "WARNING: SIT STRAIGHT!",(220,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3
             )
 
     # Display the webcam
