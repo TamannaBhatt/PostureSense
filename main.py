@@ -1,15 +1,17 @@
 import cv2
+
 from src.pose_detector import PoseDetector
 from src.feature_extractor import FeatureExtractor
 from src.posture_analyzer import PostureAnalyzer
 from src.posture_monitor import PostureMonitor
 from src.logger import PostureLogger
 from src.session_timer import SessionTimer
+from src.dashboard import Dashboard
 
 # Initialize webcam
 cap = cv2.VideoCapture(0)
 
-# Create object
+# Initialize objects
 detector = PoseDetector()
 monitor = PostureMonitor()
 logger = PostureLogger()
@@ -22,112 +24,95 @@ while True:
     if not success:
         break
 
-    # Flip the frame for a mirror view
+    # Mirror the webcam
     frame = cv2.flip(frame, 1)
 
-    # Detect pose and get landmarks
+    # Detect pose
     frame, landmarks = detector.detect_pose(frame)
 
-    # If landmarks are detected
     if landmarks:
 
         mp_pose = detector.mp_pose
 
-        # Extract important landmarks
+        # Landmarks (only used for debugging)
         nose = landmarks[mp_pose.PoseLandmark.NOSE.value]
         left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
         right_shoulder = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value]
 
-        # Display coordinates on screen
-        cv2.putText(
-            frame,
-            f"Nose: ({nose.x:.2f}, {nose.y:.2f})",
-            (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (0, 255, 0),
-            2
-        )
-
-        cv2.putText(
-            frame,
-            f"L Shoulder: ({left_shoulder.x:.2f}, {left_shoulder.y:.2f})",
-            (10, 60),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (0, 255, 0),
-            2
-        )
-
-        cv2.putText(
-            frame,
-            f"R Shoulder: ({right_shoulder.x:.2f}, {right_shoulder.y:.2f})",
-            (10, 90),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (0, 255, 0),
-            2
-        )
-
-        # Get all posture features
+        # -------------------------------
+        # Feature Extraction
+        # -------------------------------
         features = FeatureExtractor.extract_features(
             landmarks,
             mp_pose
         )
 
+        # -------------------------------
+        # Posture Analysis
+        # -------------------------------
         analysis = PostureAnalyzer.analyze(features)
+
+        # -------------------------------
+        # Monitor
+        # -------------------------------
         bad_posture_time = monitor.update(
             analysis["status"]
         )
 
+        # -------------------------------
+        # Session Timer
+        # -------------------------------
         session_time = session.get_time()
 
-        logger.log(features, analysis)
-
-        cv2.putText(
-            frame, f"Neck Angle: {features['neck_angle']:.1f}",(10,120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2
+        # -------------------------------
+        # Dashboard
+        # -------------------------------
+        frame = Dashboard.draw(
+            frame,
+            features,
+            analysis,
+            session_time,
+            bad_posture_time
         )
 
-        cv2.putText(
-            frame, f"Back Angle: {features['back_angle']:.1f}",(10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2 
-        ) 
-
-        cv2.putText(
-            frame, f"Shoulder Tilt: {features['shoulder_tilt']:.3f}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2
+        # -------------------------------
+        # CSV Logging
+        # -------------------------------
+        logger.log(
+            features,
+            analysis
         )
 
-        cv2.putText(
-            frame, f"Head Offset: {features['head_offset']:.3f}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2
-        )
-
-        cv2.putText(
-            frame, f"Posture Score: {analysis['score']}", (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, analysis["color"], 2
-        )
-
-        cv2.putText(
-            frame, f"Status: {analysis['status']}",(10, 270),cv2.FONT_HERSHEY_SIMPLEX, 0.7, analysis["color"], 2
-        )
-
-        cv2.putText(
-            frame, f"Bad Posture: {bad_posture_time}s", (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.7,(0, 0, 255),2
-        )
-
-        cv2.putText(
-            frame,f"Session: {session_time}", (10, 330), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2
-        )
-        
+        # -------------------------------
+        # Warning Banner
+        # -------------------------------
         if bad_posture_time >= 30:
-            cv2.putText(
-                frame, "WARNING: SIT STRAIGHT!",(220,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3
+
+            cv2.rectangle(
+                frame,
+                (120, 10),
+                (560, 70),
+                (0, 0, 255),
+                -1
             )
 
-    # Display the webcam
+            cv2.putText(
+                frame,
+                "WARNING: SIT STRAIGHT!",
+                (140, 50),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.9,
+                (255, 255, 255),
+                2
+            )
+
+    # Display webcam
     cv2.imshow("PostureSense AI", frame)
 
-    # Exit on pressing 'q'
+    # Quit
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-# Release resources
+# Cleanup
 cap.release()
 cv2.destroyAllWindows()
