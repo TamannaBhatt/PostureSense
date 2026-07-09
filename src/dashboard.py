@@ -5,7 +5,7 @@ import numpy as np
 class Dashboard:
 
     @staticmethod
-    def draw(frame, features, analysis, session_time, bad_posture_time):
+    def draw(frame, features, analysis, session_time, bad_posture_time, calibration):
 
         height, width = frame.shape[:2]
 
@@ -238,4 +238,5 @@ class Dashboard:
             2
         )
 
+    
         return canvas
