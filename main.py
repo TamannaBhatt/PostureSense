@@ -11,6 +11,7 @@ from src.dashboard import Dashboard
 from src.calibration import Calibration
 from src.calibration_ui import CalibrationUI
 from src.notification import Notification
+from src.smoother import FeatureSmoother
 
 
 # -----------------------------
@@ -29,6 +30,7 @@ warning_shown = False
 calibration = Calibration()
 calibration.load()
 notification = Notification()
+smoother = FeatureSmoother()
 
 # Show startup message
 calibration = Calibration()
@@ -74,7 +76,7 @@ while True:
             landmarks,
             mp_pose
         )
-
+        features = smoother.smooth(features)
         # -----------------------------
         # Calibration
         # -----------------------------
