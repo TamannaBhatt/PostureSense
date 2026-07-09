@@ -5,14 +5,35 @@ import numpy as np
 class Dashboard:
 
     @staticmethod
-    def draw(frame, features, analysis, session_time, bad_posture_time, calibration):
+    def wrap_text(text, max_chars=32):
+
+        words = text.split()
+
+        lines = []
+        line = ""
+
+        for word in words:
+
+            if len(line + word) <= max_chars:
+                line += word + " "
+            else:
+                lines.append(line.strip())
+                line = word + " "
+
+        if line:
+            lines.append(line.strip())
+
+        return lines
+
+    @staticmethod
+    def draw(frame, features, analysis, session_time, recommendation, bad_posture_time):
 
         height, width = frame.shape[:2]
 
-        panel_width = 400
+        panel_width = 450
 
         # Create canvas
-        canvas = np.zeros((height, width + panel_width, 3), dtype=np.uint8)
+        canvas = np.zeros((height, width + panel_width, 3),dtype=np.uint8)
 
         # Copy webcam frame
         canvas[:, :width] = frame
@@ -28,8 +49,7 @@ class Dashboard:
 
         # Layout constants
         LEFT = width + 25
-        VALUE = width + 230
-        RIGHT_EDGE = width + panel_width - 20
+        RIGHT = width + panel_width - 25
 
         # -------------------------
         # Title
@@ -38,20 +58,22 @@ class Dashboard:
         cv2.putText(
             canvas,
             "POSTURESENSE AI",
-            (LEFT, 35),
+            (LEFT, 40),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.8,
+            0.85,
             (255, 255, 255),
             2
         )
 
         cv2.line(
             canvas,
-            (LEFT, 50),
-            (RIGHT_EDGE, 50),
+            (LEFT, 55),
+            (RIGHT, 55),
             (100, 100, 100),
             1
         )
+
+        y = 90
 
         # -------------------------
         # Metrics
@@ -60,14 +82,11 @@ class Dashboard:
         metrics = [
             ("Neck Angle", f"{features['neck_angle']:.1f} deg"),
             ("Back Angle", f"{features['back_angle']:.1f} deg"),
-            ("Shoulder Tilt", f"{features['shoulder_tilt']:.3f}"),
+            ("Shoulder Tilt", f"{abs(features['shoulder_tilt']):.3f}"),
             ("Head Offset", f"{features['head_offset']:.3f}")
         ]
 
-        y = 85
-
         for label, value in metrics:
-
             cv2.putText(
                 canvas,
                 label,
@@ -78,72 +97,93 @@ class Dashboard:
                 1
             )
 
+            value_size = cv2.getTextSize(
+                value,
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.55,
+                2
+            )[0]
+
             cv2.putText(
                 canvas,
                 value,
-                (VALUE, y),
+                (RIGHT - value_size[0], y),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.55,
                 (255, 255, 255),
                 2
             )
 
-            y += 35
+            y += 26
 
         # Divider
+        y += 4
+
         cv2.line(
             canvas,
-            (LEFT, 235),
-            (RIGHT_EDGE, 235),
-            (100, 100, 100),
+            (LEFT, y),
+            (RIGHT, y),
+            (90,90,90),
             1
         )
 
+        y += 20
+
         # -------------------------
-        # Score
+        # Score Header
         # -------------------------
 
         cv2.putText(
             canvas,
             "POSTURE SCORE",
-            (LEFT, 265),
+            (LEFT, y),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.65,
-            (180, 180, 180),
+            (180,180,180),
             2
         )
 
+        score_text = f"{analysis['score']}/100"
+
+        score_size = cv2.getTextSize(
+            score_text,
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.9,
+            2
+        )[0]
+
         cv2.putText(
             canvas,
-            f"{analysis['score']}/100",
-            (LEFT, 305),
+            score_text,
+            (RIGHT - score_size[0], y+5),
             cv2.FONT_HERSHEY_SIMPLEX,
-            1,
+            0.9,
             analysis["color"],
-            3
+            2
         )
+
+        y += 25
 
         # -------------------------
         # Progress Bar
         # -------------------------
 
         bar_x = LEFT
-        bar_y = 325
-        bar_width = 320
-        bar_height = 20
+        bar_y = y
 
-        # Background
+        bar_width = RIGHT - LEFT
+        bar_height = 18
+
         cv2.rectangle(
             canvas,
             (bar_x, bar_y),
             (bar_x + bar_width, bar_y + bar_height),
-            (70, 70, 70),
+            (70,70,70),
             -1
         )
 
         filled = int(bar_width * analysis["score"] / 100)
 
-        # Filled part
         cv2.rectangle(
             canvas,
             (bar_x, bar_y),
@@ -152,91 +192,193 @@ class Dashboard:
             -1
         )
 
-        # Border
         cv2.rectangle(
             canvas,
             (bar_x, bar_y),
             (bar_x + bar_width, bar_y + bar_height),
-            (255, 255, 255),
+            (255,255,255),
             2
         )
 
-        # -------------------------
+        y += 45
+
+        # =============================
         # Status
-        # -------------------------
+        # =============================
 
         cv2.putText(
             canvas,
             "Status",
-            (LEFT, 375),
+            (LEFT, y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
+            0.55,
             (180, 180, 180),
             1
         )
 
+        status = analysis["status"]
+
+        status_size = cv2.getTextSize(
+            status,
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            2
+        )[0]
+
         cv2.putText(
             canvas,
-            analysis["status"],
-            (VALUE, 375),
+            status,
+            (RIGHT - status_size[0], y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.65,
+            0.55,
             analysis["color"],
             2
         )
 
-        # -------------------------
-        # Session Timer
-        # -------------------------
+        y += 32
+
+        # =============================
+        # Session
+        # =============================
 
         cv2.putText(
             canvas,
             "Session",
-            (LEFT, 410),
+            (LEFT, y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (180, 180, 180),
+            0.55,
+            (180,180,180),
             1
         )
+
+        session_size = cv2.getTextSize(
+            session_time,
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            2
+        )[0]
 
         cv2.putText(
             canvas,
             session_time,
-            (VALUE, 410),
+            (RIGHT - session_size[0], y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (255, 255, 255),
+            0.55,
+            (255,255,255),
             2
         )
 
-        # -------------------------
-        # Bad Posture Timer
-        # -------------------------
+        y += 30
+
+
+        # =============================
+        # Bad Time
+        # =============================
 
         minutes = bad_posture_time // 60
         seconds = bad_posture_time % 60
-
         bad_time = f"{minutes:02}:{seconds:02}"
 
         cv2.putText(
             canvas,
             "Bad Time",
-            (LEFT, 445),
+            (LEFT, y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (180, 180, 180),
+            0.55,
+            (180,180,180),
             1
         )
+
+        bad_size = cv2.getTextSize(
+            bad_time,
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            2
+        )[0]
 
         cv2.putText(
             canvas,
             bad_time,
-            (VALUE, 445),
+            (RIGHT - bad_size[0], y),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (255, 255, 255),
+            0.55,
+            (255,255,255),
             2
         )
 
-    
+        y += 30
+
+        # =============================
+        # Divider
+        # =============================
+
+        cv2.line(
+            canvas,
+            (LEFT, y),
+            (RIGHT, y),
+            (90, 90, 90),
+            1
+        )
+
+        y += 22
+
+        # =============================
+        # Recommendation
+        # =============================
+
+        cv2.putText(
+            canvas,
+            "RECOMMENDATION",
+            (LEFT , y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.65,
+            (180, 180, 180),
+            2
+        )
+
+        y += 25
+
+        # Issue
+
+        issue = recommendation["issues"][0] if recommendation["issues"] else "None"
+
+        issue_lines = Dashboard.wrap_text(
+            "Issue: " + issue
+        )
+
+        for line in issue_lines:
+
+            cv2.putText(
+                canvas,
+                line,
+                (LEFT + 10, y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.45,
+                (0,180,255),
+                2
+            )
+
+            y += 18
+
+        # Tip
+        tip = recommendation["suggestions"][0] if recommendation["suggestions"] else "-"
+
+        tip_lines = Dashboard.wrap_text(
+            "Tip: " + tip
+        )
+
+        for line in tip_lines:
+
+            cv2.putText(
+                canvas,
+                line,
+                (LEFT +10, y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.45,
+                (0,255,0),
+                2
+            )
+
+            y += 16
+
         return canvas

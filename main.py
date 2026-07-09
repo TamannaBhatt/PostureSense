@@ -12,6 +12,7 @@ from src.calibration import Calibration
 from src.calibration_ui import CalibrationUI
 from src.notification import Notification
 from src.smoother import FeatureSmoother
+from src.recommendation import RecommendationEngine
 
 
 # -----------------------------
@@ -91,6 +92,11 @@ while True:
             baseline
         )
 
+        recommendation = RecommendationEngine.generate(
+            features,
+            baseline
+        )
+
         # -----------------------------
         # Monitoring
         # -----------------------------
@@ -108,8 +114,8 @@ while True:
             features,
             analysis,
             session_time,
-            bad_posture_time,
-            calibration
+            recommendation,
+            bad_posture_time
         )
 
         # -----------------------------
