@@ -14,7 +14,9 @@ screenshots/
 
 # CSV logs
 logs/
+*.log
 *.csv
+data\posture_logs.csv
 
 # Calibration data (contains your personal baseline)
 data/calibration.json
