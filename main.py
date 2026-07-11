@@ -13,6 +13,7 @@ from src.calibration_ui import CalibrationUI
 from src.notification import Notification
 from src.smoother import FeatureSmoother
 from src.recommendation import RecommendationEngine
+from src.analytics import Analytics
 
 
 # -----------------------------
@@ -27,16 +28,16 @@ detector = PoseDetector()
 monitor = PostureMonitor()
 logger = PostureLogger()
 session = SessionTimer()
-warning_shown = False
+
 calibration = Calibration()
 calibration.load()
+
 notification = Notification()
 smoother = FeatureSmoother()
+analytics = Analytics()
 
-# Show startup message
-calibration = Calibration()
-calibration.load()
-notification = Notification()
+dashboard_page = 0
+last_issue = None
 
 # Show startup message
 if calibration.reference:
@@ -92,6 +93,11 @@ while True:
             baseline
         )
 
+        analytics.update(
+            analysis["score"],
+            analysis["status"]
+        )
+
         recommendation = RecommendationEngine.generate(
             features,
             baseline
@@ -106,6 +112,8 @@ while True:
 
         session_time = session.get_time()
 
+        summary = analytics.summary()
+
         # -----------------------------
         # Dashboard
         # -----------------------------
@@ -115,7 +123,9 @@ while True:
             analysis,
             session_time,
             recommendation,
-            bad_posture_time
+            bad_posture_time,
+            summary,
+            dashboard_page
         )
 
         # -----------------------------
@@ -129,18 +139,40 @@ while True:
         # -----------------------------
         # Bad Posture Warning
         # -----------------------------
-        if bad_posture_time >= 30 and not warning_shown:
-            notification.show(
-                "Sit Straight!",
-                (0, 0, 255),
-                duration=2
-            )
-            warning_shown = True
 
-        elif bad_posture_time < 30:
-            warning_shown = False
+        if bad_posture_time >= 30:
+
+            issue = recommendation["issues"][0]
+            tip = recommendation["suggestions"][0]
+
+            if issue == "Excellent posture!":
+                last_issue = None
+
+            else:
+                # Notification color based on posture score
+                score = analysis["score"]
+
+                if score >= 70:
+                    color = (0, 165, 255)      # Orange
+                else:
+                    color = (0, 0, 255)        # Red
+
+                # Show notification only when issue changes
+                if issue != last_issue:
+
+                    notification.show(
+                        f"POSTURE ALERT\n{issue}\n{tip}",
+                        color,
+                        duration=3
+                    )
+
+                    last_issue = issue
+
+        else:
+            last_issue = None
 
     else:
+        last_issue = None
         cv2.putText(
             frame,
             "No Person Detected",
@@ -156,6 +188,8 @@ while True:
     # =====================================
 
     key = cv2.waitKey(1) & 0xFF
+    if key == 9:      # TAB key
+        dashboard_page = 1 - dashboard_page
 
     if key == ord("c"):
         if not calibration.calibrating:
