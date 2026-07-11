@@ -16,6 +16,7 @@ from src.recommendation import RecommendationEngine
 from src.analytics import Analytics
 from src.report_generator import ReportGenerator
 from src.screenshot import Screenshot
+from src.trend_graph import TrendGraph
 
 
 # -----------------------------
@@ -37,6 +38,7 @@ calibration.load()
 notification = Notification()
 smoother = FeatureSmoother()
 analytics = Analytics()
+trend = TrendGraph()
 
 dashboard_page = 0
 last_issue = None
@@ -103,6 +105,8 @@ while True:
             analysis["status"]
         )
 
+        trend.update(analysis["score"])
+
         recommendation = RecommendationEngine.generate(
             features,
             baseline
@@ -130,7 +134,8 @@ while True:
             recommendation,
             bad_posture_time,
             summary,
-            dashboard_page
+            dashboard_page,
+            trend
         )
 
         # -----------------------------

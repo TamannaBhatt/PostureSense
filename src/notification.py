@@ -45,7 +45,7 @@ class Notification:
             frame,
             (x, y),
             (x + box_width, y + box_height),
-            self.color,
+            (180, 105, 255),
             2
         )
 

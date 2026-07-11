@@ -1,6 +1,24 @@
 import cv2
 import numpy as np
 
+# -------------------------
+# UI COLORS
+# -------------------------
+
+BG = (35, 35, 35)
+CARD = (45, 45, 45)
+
+WHITE = (245, 245, 245)
+GRAY = (170, 170, 170)
+LIGHT_GRAY = (120, 120, 120)
+
+PINK = (180, 105, 255)        # Soft blush pink (BGR)
+PINK_LIGHT = (210, 160, 255)
+
+GREEN = (0, 255, 0)
+YELLOW = (0, 255, 255)
+ORANGE = (0, 165, 255)
+RED = (0, 0, 255)
 
 class Dashboard:
 
@@ -24,28 +42,65 @@ class Dashboard:
             lines.append(line.strip())
 
         return lines
+    
 
     @staticmethod
-    def draw(frame, features, analysis, session_time, recommendation, bad_posture_time, summary, page):
+    def rounded_rectangle(img, pt1, pt2, color, radius=20, thickness=2):
+
+        x1, y1 = pt1
+        x2, y2 = pt2
+
+        # Straight edges
+        cv2.line(img, (x1 + radius, y1), (x2 - radius, y1), color, thickness)
+        cv2.line(img, (x1 + radius, y2), (x2 - radius, y2), color, thickness)
+        cv2.line(img, (x1, y1 + radius), (x1, y2 - radius), color, thickness)
+        cv2.line(img, (x2, y1 + radius), (x2, y2 - radius), color, thickness)
+
+        # Rounded corners
+        cv2.ellipse(img, (x1 + radius, y1 + radius), (radius, radius),
+                    180, 0, 90, color, thickness)
+
+        cv2.ellipse(img, (x2 - radius, y1 + radius), (radius, radius),
+                    270, 0, 90, color, thickness)
+
+        cv2.ellipse(img, (x1 + radius, y2 - radius), (radius, radius),
+                    90, 0, 90, color, thickness)
+
+        cv2.ellipse(img, (x2 - radius, y2 - radius), (radius, radius),
+                    0, 0, 90, color, thickness)
+
+
+    @staticmethod
+    def draw(frame, features, analysis, session_time, recommendation, bad_posture_time, summary, page, trend):
 
         height, width = frame.shape[:2]
-
+        dashboard_height = max(height, 700)
         panel_width = 450
 
         # Create canvas
-        canvas = np.zeros((height, width + panel_width, 3),dtype=np.uint8)
+        canvas = np.zeros((dashboard_height, width + panel_width, 3),dtype=np.uint8)
 
         # Copy webcam frame
-        canvas[:, :width] = frame
+        canvas[:height, :width] = frame
 
         # Dashboard background
         cv2.rectangle(
             canvas,
             (width, 0),
-            (width + panel_width, height),
+            (width + panel_width, dashboard_height),
             (35, 35, 35),
             -1
         )
+
+        Dashboard.rounded_rectangle(
+            canvas,
+            (width + 8, 8),
+            (width + panel_width - 8, dashboard_height - 8),
+            (105, 90, 120),
+            radius=18,
+            thickness=1
+        )
+
 
         # Layout constants
         LEFT = width + 25
@@ -55,25 +110,40 @@ class Dashboard:
         # Title
         # -------------------------
 
+        title = "POSTURE SENSE AI"
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        scale = 1.15
+        thickness = 2
+
+        title_size = cv2.getTextSize(
+            title,
+            font,
+            scale,
+            thickness
+        )[0]
+
+        title_x = LEFT + ((RIGHT - LEFT) - title_size[0]) // 2
+
         cv2.putText(
             canvas,
-            "POSTURESENSE AI",
-            (LEFT, 40),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.85,
-            (255, 255, 255),
-            2
+            title,
+            (title_x, 48),
+            font,
+            scale,
+            WHITE,
+            thickness
         )
 
         cv2.line(
             canvas,
-            (LEFT, 55),
-            (RIGHT, 55),
-            (100, 100, 100),
+            (LEFT, 65),
+            (RIGHT, 65),
+            PINK_LIGHT,
             1
         )
 
-        y = 90
+        y = 120
 
         # -------------------------
         # Split
@@ -84,6 +154,18 @@ class Dashboard:
             # Metrics
             # -------------------------
 
+            cv2.putText(
+                canvas,
+                "POSTURE METRICS",
+                (LEFT, y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.75,
+                PINK_LIGHT,
+                2
+            )
+            y += 40
+
+            
             metrics = [
                 ("Neck Angle", f"{features['neck_angle']:.1f} deg"),
                 ("Back Angle", f"{features['back_angle']:.1f} deg"),
@@ -128,11 +210,11 @@ class Dashboard:
                 canvas,
                 (LEFT, y),
                 (RIGHT, y),
-                (90,90,90),
+                (120,100,140),
                 1
             )
 
-            y += 30
+            y += 45
 
             # -------------------------
             # Score Header
@@ -143,8 +225,8 @@ class Dashboard:
                 "POSTURE SCORE",
                 (LEFT, y),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.65,
-                (180,180,180),
+                0.75,
+                PINK_LIGHT,
                 2
             )
 
@@ -160,7 +242,17 @@ class Dashboard:
             cv2.putText(
                 canvas,
                 score_text,
-                (RIGHT - score_size[0], y+5),
+                (RIGHT-score_size[0], y+5),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.9,
+                PINK_LIGHT,
+                5
+            )
+
+            cv2.putText(
+                canvas,
+                score_text,
+                (RIGHT-score_size[0], y+5),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.9,
                 analysis["color"],
@@ -205,7 +297,7 @@ class Dashboard:
                 2
             )
 
-            y += 45
+            y += 60
 
             # =============================
             # Status
@@ -240,77 +332,6 @@ class Dashboard:
                 2
             )
 
-            y += 32
-
-            # =============================
-            # Session
-            # =============================
-
-            cv2.putText(
-                canvas,
-                "Session",
-                (LEFT, y),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.55,
-                (180,180,180),
-                1
-            )
-
-            session_size = cv2.getTextSize(
-                session_time,
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.55,
-                2
-            )[0]
-
-            cv2.putText(
-                canvas,
-                session_time,
-                (RIGHT - session_size[0], y),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.55,
-                (255,255,255),
-                2
-            )
-
-            y += 30
-
-
-            # =============================
-            # Bad Time
-            # =============================
-
-            minutes = bad_posture_time // 60
-            seconds = bad_posture_time % 60
-            bad_time = f"{minutes:02}:{seconds:02}"
-
-            cv2.putText(
-                canvas,
-                "Bad Time",
-                (LEFT, y),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.55,
-                (180,180,180),
-                1
-            )
-
-            bad_size = cv2.getTextSize(
-                bad_time,
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.55,
-                2
-            )[0]
-
-            cv2.putText(
-                canvas,
-                bad_time,
-                (RIGHT - bad_size[0], y),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.55,
-                (255,255,255),
-                2
-            )
-
             y += 30
 
             # =============================
@@ -321,7 +342,60 @@ class Dashboard:
                 canvas,
                 (LEFT, y),
                 (RIGHT, y),
-                (90, 90, 90),
+                (120,100,140),
+                1
+            )
+
+            y += 45
+
+            # =============================
+            # Recommendation
+            # =============================
+
+            cv2.putText(
+                canvas,
+                "RECOMMENDATION",
+                (LEFT, y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.75,
+                PINK_LIGHT,
+                2
+            )
+
+            y += 40
+
+            tip = recommendation["suggestions"][0]
+
+            lines = Dashboard.wrap_text(
+                tip,
+                max_chars=30
+            )
+
+            for line in lines:
+
+                cv2.putText(
+                    canvas,
+                    line,
+                    (LEFT, y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.52,
+                    WHITE,
+                    1
+                )
+
+                y += 26
+
+            
+
+            # =============================
+            # Divider
+            # =============================
+
+            cv2.line(
+                canvas,
+                (LEFT, y),
+                (RIGHT, y),
+                (120,100,140),
                 1
             )
 
@@ -337,12 +411,11 @@ class Dashboard:
                 "SESSION ANALYTICS",
                 (LEFT, y),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.70,
-                (180,180,180),
+                0.75,
+                PINK_LIGHT,
                 2
             )
-
-            y += 40
+            y += 35
 
             items = [
                 ("Session", session_time),
@@ -402,7 +475,7 @@ class Dashboard:
                     2
                 )
 
-                y += 35
+                y += 28
 
 
             #divider
@@ -410,13 +483,27 @@ class Dashboard:
                 canvas,
                 (LEFT, y),
                 (RIGHT, y),
-                (90,90,90),
+                (120,100,140),
                 1
             )
 
-            y += 30
+            y += 35
 
-            #percentage
+            # =============================
+            # Posture Distribution
+            # =============================
+            cv2.putText(
+                canvas,
+                "POSTURE DISTRIBUTION",
+                (LEFT, y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.75,
+                PINK_LIGHT,
+                2
+            )
+            y += 35
+
+
             percentages = summary["percentages"]
 
             rows = [
@@ -438,7 +525,7 @@ class Dashboard:
                     label,
                     (LEFT, y),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.52,
+                    0.55,
                     (180,180,180),
                     1
                 )
@@ -448,7 +535,7 @@ class Dashboard:
                 size = cv2.getTextSize(
                     value,
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.52,
+                    0.55,
                     2
                 )[0]
 
@@ -462,17 +549,41 @@ class Dashboard:
                     2
                 )
 
-                y += 30
+                y += 26
 
-
-
+            # =============================
+            # Trend Graph
+            # =============================
             cv2.line(
                 canvas,
-                (LEFT, height - 45),
-                (RIGHT, height - 45),
-                (90,90,90),
+                (LEFT, y),
+                (RIGHT, y),
+                (120,100,140),
                 1
             )
+
+            y += 35
+
+            cv2.putText(
+                canvas,
+                "POSTURE TREND",
+                (LEFT, y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.75,
+                PINK_LIGHT,
+                2
+            )
+            y += 30
+
+
+            trend.draw(
+                canvas,
+                LEFT + 25,
+                y,
+                RIGHT - LEFT - 25,
+                120
+            )
+
 
         # =============================
         # FOOTER
@@ -481,11 +592,21 @@ class Dashboard:
         footer = "[TAB] Analytics" if page == 0 else "[TAB] Live Dashboard"
         cv2.putText(
             canvas,
-            footer,
-            (LEFT, height - 18),
+            "[TAB]",
+            (LEFT, dashboard_height - 18),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.45,
-            (150,150,150),
+            PINK,
+            1
+        )
+
+        cv2.putText(
+            canvas,
+            " Switch Dashboard",
+            (LEFT + 42, dashboard_height - 18),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.45,
+            GRAY,
             1
         )
 
