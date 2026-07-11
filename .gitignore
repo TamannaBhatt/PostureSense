@@ -1,17 +1,24 @@
-# Virtual Environment
+# Virtual environment
 venv/
+.venv/
 
-# Python Cache
+# Python cache
 __pycache__/
 *.pyc
 
-# VS Code
-.vscode/
-
-# Generated Data
-data/logs/
+# Generated reports
 reports/
 
-# OS Files
+# Screenshots
+screenshots/
+
+# CSV logs
+logs/
+*.csv
+
+# Calibration data (contains your personal baseline)
+data/calibration.json
+
+# OS files
 .DS_Store
 Thumbs.db
