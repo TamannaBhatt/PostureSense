@@ -15,6 +15,7 @@ from src.smoother import FeatureSmoother
 from src.recommendation import RecommendationEngine
 from src.analytics import Analytics
 from src.report_generator import ReportGenerator
+from src.screenshot import Screenshot
 
 
 # -----------------------------
@@ -43,14 +44,14 @@ last_issue = None
 # Show startup message
 if calibration.reference:
     notification.show(
-        "READY\nPress C : Recalibrate\nR : Save Report\nPress Q : Quit",
+        "READY\nPress C : Recalibrate\nR : Save Report\nS : Screenshot\nPress Q : Quit",
         (0,255,0),
         duration=5
     )
 
 else:
     notification.show(
-        "CALIBRATION REQUIRED\nPress C : Calibrate\nR : Save Report\nPress Q : Quit",
+        "CALIBRATION REQUIRED\nPress C : Calibrate\nR : Save Report\nS : Screenshot\nPress Q : Quit",
         (0,255,255),
         duration=5
     )
@@ -214,6 +215,18 @@ while True:
             duration=2
         )
         print(f"Report saved: {filename}")
+
+    elif key == ord("s"):
+
+        filename = Screenshot.save(frame)
+
+        notification.show(
+            "Screenshot Saved",
+            (0, 255, 0),
+            duration=2
+        )
+
+        print(f"Screenshot saved: {filename}")
 
     elif key == ord("q"):
         break
