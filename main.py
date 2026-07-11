@@ -14,6 +14,7 @@ from src.notification import Notification
 from src.smoother import FeatureSmoother
 from src.recommendation import RecommendationEngine
 from src.analytics import Analytics
+from src.report_generator import ReportGenerator
 
 
 # -----------------------------
@@ -42,20 +43,23 @@ last_issue = None
 # Show startup message
 if calibration.reference:
     notification.show(
-        "Calibration Loaded\nPress C : Recalibrate\nPress Q : Quit",
+        "READY\nPress C : Recalibrate\nR : Save Report\nPress Q : Quit",
         (0,255,0),
         duration=5
     )
 
 else:
     notification.show(
-        "Calibration Required\nPress C : Calibrate\nPress Q : Quit",
+        "CALIBRATION REQUIRED\nPress C : Calibrate\nR : Save Report\nPress Q : Quit",
         (0,255,255),
         duration=5
     )
 # -----------------------------
 # Main Loop
 # -----------------------------
+summary = analytics.summary()
+session_time = "00:00:00"
+
 while True:
 
     success, frame = cap.read()
@@ -198,6 +202,18 @@ while True:
                 "Calibration Started",
                 (0, 255, 255)
             )
+
+    elif key == ord("r"):
+        filename = ReportGenerator.generate(
+            summary,
+            session_time
+        )
+        notification.show(
+            "Session Report Saved",
+            (0, 255, 0),
+            duration=2
+        )
+        print(f"Report saved: {filename}")
 
     elif key == ord("q"):
         break
